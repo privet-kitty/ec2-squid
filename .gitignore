@@ -1,0 +1,7 @@
+.*
+*.tfstate
+*.tfstate.backup
+squid_key
+squid_key.pub
+!/.gitignore
+!/.vscode
