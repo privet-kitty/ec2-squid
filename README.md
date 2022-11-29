@@ -29,6 +29,7 @@ terraform apply
 ### Use
 
 - The public IP and DNS of the proxy server are displayed after deploy. The port number is 3128.
+- SSH login command will be like `ssh -i squid_key ec2-user@<public IP>`.
 - Logs on start-up are stored at `/var/log/cloud-init-output.log` in the instance.
 
 ### Destroy
