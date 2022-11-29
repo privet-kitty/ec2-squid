@@ -11,6 +11,12 @@ ssh-keygen -t rsa -f squid_key -N ""  # or ssh-keygen -t rsa -f squid_key -N '""
 terraform init
 ```
 
+You may want to put terraform variables to `terraform.tfvars` priot to init. The currently used variable are as follows:
+
+```
+aws_region = <region name>
+```
+
 ### Deploy
 
 You'll need to prepare your AWS profile for deploy. You may want to use aws-vault and add `aws-vault exec <profile> --` as a prefix of the following commands.

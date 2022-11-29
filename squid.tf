@@ -12,9 +12,12 @@ terraform {
   }
 }
 
+variable "aws_region" {
+  default = "ap-northeast-1"
+}
 
 provider "aws" {
-  region = "ap-northeast-1"
+  region = var.aws_region
 }
 
 data "http" "ifconfig" {
