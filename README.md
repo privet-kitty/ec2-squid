@@ -11,19 +11,14 @@ ssh-keygen -t rsa -f squid_key -N ""  # or ssh-keygen -t rsa -f squid_key -N '""
 terraform init
 ```
 
-You may want to put terraform variables to `terraform.tfvars` priot to init. The currently used variable are as follows:
+### Deploy
+
+You can deploy a proxy server by `terraform apply`. You'll need to prepare your AWS profile for deploy in advance. You may want to use aws-vault and add `aws-vault exec <profile> --` as a prefix of the command.
+
+You can set terraform variables via e.g. `terraform.tfvars` or `-var` option (like `terraform apply -var='aws_region=ap-northeast-1'`). The currently used variables are as follows.
 
 ```
 aws_region = <region name>
-```
-
-### Deploy
-
-You'll need to prepare your AWS profile for deploy. You may want to use aws-vault and add `aws-vault exec <profile> --` as a prefix of the following commands.
-
-```bash
-terraform plan
-terraform apply
 ```
 
 ### Use
