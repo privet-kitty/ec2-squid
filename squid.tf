@@ -29,6 +29,51 @@ locals {
   allowed_cidr = "${local.current_ip}/32"
 }
 
+resource "aws_vpc" "proxy_vpc" {
+  cidr_block                       = "172.31.0.0/16"
+  enable_dns_support               = "true"
+  enable_dns_hostnames             = "true"
+  instance_tenancy                 = "default"
+  assign_generated_ipv6_cidr_block = "false"
+}
+
+resource "aws_subnet" "proxy_vpc_public_subnet" {
+  vpc_id                          = aws_vpc.proxy_vpc.id
+  cidr_block                      = "172.31.0.0/20"
+  assign_ipv6_address_on_creation = "false"
+  map_public_ip_on_launch         = "true"
+  # availability_zone can't be fixed because the region isn't fixed either.
+
+  tags = {
+    Name = "proxy_vpc_public_subnet"
+  }
+}
+
+resource "aws_route_table" "proxy_vpc_public_rt" {
+  vpc_id = aws_vpc.proxy_vpc.id
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = aws_internet_gateway.proxy_igw.id
+  }
+}
+
+resource "aws_main_route_table_association" "public_rt_vpc" {
+  vpc_id         = aws_vpc.proxy_vpc.id
+  route_table_id = aws_route_table.proxy_vpc_public_rt.id
+}
+
+resource "aws_route_table_association" "public_rt_public_subnet" {
+  subnet_id      = aws_subnet.proxy_vpc_public_subnet.id
+  route_table_id = aws_route_table.proxy_vpc_public_rt.id
+}
+
+resource "aws_internet_gateway" "proxy_igw" {
+  vpc_id = aws_vpc.proxy_vpc.id
+  tags = {
+    Name = "proxy_igw"
+  }
+}
+
 resource "aws_security_group" "allow_proxy" {
   name        = "allow_proxy"
   description = "Allow traffic for squid"
@@ -67,6 +112,10 @@ resource "aws_instance" "squid_server" {
   vpc_security_group_ids = [aws_security_group.allow_proxy.id]
   key_name               = aws_key_pair.squid_key.id
   user_data              = file("initialize.sh")
+
+  tags = {
+    Name = "squid_server"
+  }
 }
 
 output "public_ip" {
