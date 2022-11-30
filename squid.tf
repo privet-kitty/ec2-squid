@@ -35,9 +35,13 @@ resource "aws_vpc" "proxy_vpc" {
   enable_dns_hostnames             = "true"
   instance_tenancy                 = "default"
   assign_generated_ipv6_cidr_block = "false"
+
+  tags = {
+    Name = "proxy_vpc"
+  }
 }
 
-resource "aws_subnet" "proxy_vpc_public_subnet" {
+resource "aws_subnet" "public_subnet" {
   vpc_id                          = aws_vpc.proxy_vpc.id
   cidr_block                      = "172.31.0.0/20"
   assign_ipv6_address_on_creation = "false"
@@ -49,34 +53,38 @@ resource "aws_subnet" "proxy_vpc_public_subnet" {
   }
 }
 
-resource "aws_route_table" "proxy_vpc_public_rt" {
+resource "aws_route_table" "public_rt" {
   vpc_id = aws_vpc.proxy_vpc.id
   route {
     cidr_block = "0.0.0.0/0"
     gateway_id = aws_internet_gateway.proxy_igw.id
   }
+  tags = {
+    Name = "proxy_vpc_public_rt"
+  }
 }
 
 resource "aws_main_route_table_association" "public_rt_vpc" {
   vpc_id         = aws_vpc.proxy_vpc.id
-  route_table_id = aws_route_table.proxy_vpc_public_rt.id
+  route_table_id = aws_route_table.public_rt.id
 }
 
 resource "aws_route_table_association" "public_rt_public_subnet" {
-  subnet_id      = aws_subnet.proxy_vpc_public_subnet.id
-  route_table_id = aws_route_table.proxy_vpc_public_rt.id
+  subnet_id      = aws_subnet.public_subnet.id
+  route_table_id = aws_route_table.public_rt.id
 }
 
 resource "aws_internet_gateway" "proxy_igw" {
   vpc_id = aws_vpc.proxy_vpc.id
   tags = {
-    Name = "proxy_igw"
+    Name = "proxy_vpc_igw"
   }
 }
 
-resource "aws_security_group" "allow_proxy" {
-  name        = "allow_proxy"
+resource "aws_security_group" "allow_proxy_port" {
+  name        = "allow_proxy_port"
   description = "Allow traffic for squid"
+  vpc_id      = aws_vpc.proxy_vpc.id
   ingress { # squid default port
     from_port   = 3128
     to_port     = 3128
@@ -95,6 +103,9 @@ resource "aws_security_group" "allow_proxy" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+  tags = {
+    Name = "proxy_vpc_allow_proxy_port"
+  }
 }
 
 data "aws_ssm_parameter" "amzn2_ami" {
@@ -104,17 +115,21 @@ data "aws_ssm_parameter" "amzn2_ami" {
 resource "aws_key_pair" "squid_key" {
   key_name   = "squid_key"
   public_key = file("./squid_key.pub")
+  tags = {
+    Name = "proxy_vpc_key"
+  }
 }
 
 resource "aws_instance" "squid_server" {
   ami                    = data.aws_ssm_parameter.amzn2_ami.value
   instance_type          = "t2.micro"
-  vpc_security_group_ids = [aws_security_group.allow_proxy.id]
+  vpc_security_group_ids = [aws_security_group.allow_proxy_port.id]
+  subnet_id              = aws_subnet.public_subnet.id
   key_name               = aws_key_pair.squid_key.id
   user_data              = file("initialize.sh")
 
   tags = {
-    Name = "squid_server"
+    Name = "squid_proxy_server"
   }
 }
 
