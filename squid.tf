@@ -16,6 +16,10 @@ variable "aws_region" {
   default = "ap-northeast-1"
 }
 
+variable "project_code" {
+  default = null
+}
+
 provider "aws" {
   region = var.aws_region
 }
@@ -37,7 +41,8 @@ resource "aws_vpc" "proxy_vpc" {
   assign_generated_ipv6_cidr_block = "false"
 
   tags = {
-    Name = "proxy_vpc"
+    Name        = "proxy_vpc"
+    ProjectCode = var.project_code
   }
 }
 
@@ -49,7 +54,8 @@ resource "aws_subnet" "public_subnet" {
   # availability_zone can't be fixed because the region isn't fixed either.
 
   tags = {
-    Name = "proxy_vpc_public_subnet"
+    Name        = "proxy_vpc_public_subnet"
+    ProjectCode = var.project_code
   }
 }
 
@@ -60,7 +66,8 @@ resource "aws_route_table" "public_rt" {
     gateway_id = aws_internet_gateway.proxy_igw.id
   }
   tags = {
-    Name = "proxy_vpc_public_rt"
+    Name        = "proxy_vpc_public_rt"
+    ProjectCode = var.project_code
   }
 }
 
@@ -77,7 +84,8 @@ resource "aws_route_table_association" "public_rt_public_subnet" {
 resource "aws_internet_gateway" "proxy_igw" {
   vpc_id = aws_vpc.proxy_vpc.id
   tags = {
-    Name = "proxy_vpc_igw"
+    Name        = "proxy_vpc_igw"
+    ProjectCode = var.project_code
   }
 }
 
@@ -104,7 +112,8 @@ resource "aws_security_group" "allow_proxy_port" {
     cidr_blocks = ["0.0.0.0/0"]
   }
   tags = {
-    Name = "proxy_vpc_allow_proxy_port"
+    Name        = "proxy_vpc_allow_proxy_port"
+    ProjectCode = var.project_code
   }
 }
 
@@ -116,7 +125,8 @@ resource "aws_key_pair" "squid_key" {
   key_name   = "squid_key"
   public_key = file("./squid_key.pub")
   tags = {
-    Name = "proxy_vpc_key"
+    Name        = "proxy_vpc_key"
+    ProjectCode = var.project_code
   }
 }
 
@@ -129,7 +139,8 @@ resource "aws_instance" "squid_server" {
   user_data              = file("initialize.sh")
 
   tags = {
-    Name = "squid_proxy_server"
+    Name        = "squid_proxy_server"
+    ProjectCode = var.project_code
   }
 }
 
