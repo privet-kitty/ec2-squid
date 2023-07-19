@@ -22,6 +22,10 @@ aws_region = "ap-northeast-1"
 project_code = null  # used as ProjectCode tag
 ```
 
+Please note that you need the same variables setting also when you __destroy__ the instance. Otherwise some resources may not be deleted.
+
+
+
 ### Use
 
 - The public IP and DNS of the proxy server are displayed after deploy. The port number is 3128.
